@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block content-header %}
+    <h1>
+    Extract Chemicals
+    <small>Optional description</small>
+  </h1>
+  <ol class="breadcrumb">
+    <li><a href="#"><i class="fa fa-dashboard"></i> Level</a></li>
+    <li class="active">Here</li>
+  </ol>
+{% endblock %}
+
+{% block content %}
+
+
+<style type="text/css">
+    #myNav{
+		width: 300px;    	
+    }
+    #myNav.affix{
+        top: 30px; /* Set the top position of pinned element */
+    }
+</style>
+
+    <div class="row">
+    	<div class="col-xs-3" id="myScrollspy">
+            <div id="myNav">
+                <div class="box box-primary">
+                    <div class="box-header with-border">
+                        <h3 class="box-title">Configuration Panel</h3>
+                    </div>
+                    <div class="box-body">
+                        <label for="">Task name</label>
+                        <select name="collection" class="form-control">
+                            {% for col in collection_list %}
+                            <option value={{col.id}}>{{ col.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <label style='display: block;height: 5px;'>&nbsp;</label>
+                        <label for="">Analyze field</label>
+                        <select name="analyze_field" class="form-control">
+                            <option value="Title - DWPI"> Title - DWPI </option>
+                            <option value="Abstract - DWPI"> Abstract - DWPI </option>
+                        </select>
+                        <label style='display: block;height: 5px;'>&nbsp;</label>
+                        <label for="">Method</label>
+                        <select name="algorithm" class="form-control">
+                            <option>Native</option>
+                            <option>TextRazor</option> 
+                        </select>
+                        <br/>
+                        <button type="Submit" class="btn btn-primary pull-right" id="btn_extract">Extract Now</button>
+                     </div>
+                    <div class="box-footer">
+                        
+                    </div>
+                </div>
+            </div>
+    	</div>
+    	<div class="col-xs-9">
+            <div class="alert alert-warning alert-dismissible" role="alert" id="message_box">
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">×</span></button>
+                Please select the <strong>Task</strong> for extraction.
+            </div>
+            <div class="box box-primary">
+                <div class="box-header">
+                  <h3 class="box-title"><b>Collection - <span id="collection_name"></span></b></h3>
+                </div>
+                <div class="box-body">
+
+                    <div class="panel-group" id="phrase_list">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Chemical Phrase</th>
+                                    <th>#</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbl_list">
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+                <div class="overlay" id="collection_list_loading">
+                  <i class="fa fa-refresh fa-spin"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block js-block %}
+<script>
+$(document).ready(function(){
+
+    $("#myNav").affix({
+        offset: { 
+            top: 125 
+     	}
+    });
+
+    $('#collection_list_loading').hide();   
+
+    $("#btn_extract").click(function(){
+
+        $("#tbl_list").empty();
+
+        $('#collection_list_loading').show();
+
+        var post_data = {
+            "collection": $("select[name=collection]").val(),
+            "field": $("select[name=analyze_field]").val(),
+            "algorithm": $("select[name=algorithm]").val(),
+            csrfmiddlewaretoken: '{{ csrf_token }}'
+        };
+
+        $.ajax({
+            url: {% url 'extract' %},
+            type: 'POST',
+            // timeout : 90000,
+            data: post_data,
+            success: function (data) {
+                data = JSON.parse(data);
+                // console.log(data.result);
+
+                str = ""
+                for (var i =0; i< data.result.length; i++) {
+                    console.log(data.result[i][0]);
+                    str = str + "<tr><td>" + data.result[i][0] + "</td><td>" + data.result[i][1] + "</td></tr>"
+                }
+
+                $("#tbl_list").append(str);
+
+                $('#message_box').hide();
+                $('#collection_list_loading').hide();
+
+                field = ''
+                if ($("select[name=analyze_field]").val() == 'Abstract - DWPI') {
+                    field = 'abstract_dwpi'
+                } else if ($("select[name=analyze_field]").val() == 'Title - DWPI') {
+                    field = 'title_dwpi'
+                }
+
+                algo = 'native'
+                if ($("select[name=algorithm]").val() == 'Native') {
+                    algo = 'native'
+                } else {
+                    algo = 'textrazor'
+                }
+
+                if ($("#wordcloud").length == 0) {
+                    $('#phrase_list').before('<div align="center"><img id="wordcloud" src="/static/image/wordcloud/' + $("select[name=collection]").val() + '_' + algo + '_' + field + '.png" /></div>')
+                } else {
+                    $("#wordcloud")[0].src = '/static/image/wordcloud/' + $("select[name=collection]").val() + '_' + algo + '_' + field + '.png'
+                }
+            },
+            error: function () {
+                // $('#message_box').show();
+                $("#tbl_list").empty();
+                $('#collection_list_loading').hide();
+            }
+        });
+
+    });
+
+});
+</script>
+{% endblock %}

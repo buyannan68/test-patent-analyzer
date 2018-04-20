@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <!-- Bootstrap 3.3.6 -->
+    <link href="/static/css/bootstrap.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.5.0/css/font-awesome.min.css">
+    <!-- Ionicons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ionicons/2.0.1/css/ionicons.min.css">
+    <!-- Theme style -->
+    <link href="/static/css/AdminLTE.min.css" rel="stylesheet">
+    <link href="/static/css/skins/skin-blue.min.css" rel="stylesheet">
+    <link href="/static/css/style.css" rel="stylesheet">
+    <link href="/static/css/app.css" rel="stylesheet">
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" type="text/css" href="http://cdn.datatables.net/1.10.15/css/jquery.dataTables.css">
+    <link rel="stylesheet" type="text/css" href="http://cdn.datatables.net/plug-ins/28e7751dbec/integration/bootstrap/3/dataTables.bootstrap.css">
+
+    <!-- X-editable CSS -->
+    <link rel="stylesheet" type="text/css" href="/static/css/bootstrap-editable.css">
+    <link href="/static/css/bootstrap-slider.min.css" rel="stylesheet">
+
+</head>
+<body class="skin-blue sidebar-mini" style="height: auto">
+    <div class="wrapper" style="height:auto">
+        <header class="main-header">
+            <!-- Logo -->
+            <a href="{% url 'index' %}" class="logo">
+              <!-- mini logo for sidebar mini 50x50 pixels -->
+              <span class="logo-mini">PA</span>
+              <!-- logo for regular state and mobile devices -->
+              <span class="logo-lg">Patent Analyzer</span>
+            </a>
+
+            <!-- Header Navbar -->
+            <nav class="navbar navbar-static-top" role="navigation">
+              <!-- Sidebar toggle button-->
+              <a href="#" class="sidebar-toggle" data-toggle="offcanvas" role="button">
+                <span class="sr-only">Toggle navigation</span>
+              </a>
+              <!-- Navbar Right Menu -->
+              <div class="navbar-custom-menu">
+                <ul class="nav navbar-nav">
+                  <!-- Messages: style can be found in dropdown.less-->
+                  <li class="dropdown messages-menu">
+                    <!-- Menu toggle button -->
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                      <i class="fa fa-envelope-o"></i>
+                      <span class="label label-success">4</span>
+                    </a>
+                    <ul class="dropdown-menu">
+                      <li class="header">You have 4 messages</li>
+                      <li>
+                        <!-- inner menu: contains the messages -->
+                        <ul class="menu">
+                          <li><!-- start message -->
+                            <a href="#">
+                              <div class="pull-left">
+                                <!-- User Image -->
+                                <img src="" class="img-circle" alt="User Image">
+                              </div>
+                              <!-- Message title and timestamp -->
+                              <h4>
+                                Support Team
+                                <small><i class="fa fa-clock-o"></i> 5 mins</small>
+                              </h4>
+                              <!-- The message -->
+                              <p>Why not buy a new awesome theme?</p>
+                            </a>
+                          </li>
+                          <!-- end message -->
+                        </ul>
+                        <!-- /.menu -->
+                      </li>
+                      <li class="footer"><a href="#">See All Messages</a></li>
+                    </ul>
+                  </li>
+                  <!-- /.messages-menu -->
+
+                  <!-- Notifications Menu -->
+                  <li class="dropdown notifications-menu">
+                    <!-- Menu toggle button -->
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                      <i class="fa fa-bell-o"></i>
+                      <span class="label label-warning">10</span>
+                    </a>
+                    <ul class="dropdown-menu">
+                      <li class="header">You have 10 notifications</li>
+                      <li>
+                        <!-- Inner Menu: contains the notifications -->
+                        <ul class="menu">
+                          <li><!-- start notification -->
+                            <a href="#">
+                              <i class="fa fa-users text-aqua"></i> 5 new members joined today
+                            </a>
+                          </li>
+                          <!-- end notification -->
+                        </ul>
+                      </li>
+                      <li class="footer"><a href="#">View all</a></li>
+                    </ul>
+                  </li>
+                  <!-- Tasks Menu -->
+                  <li class="dropdown tasks-menu">
+                    <!-- Menu Toggle Button -->
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                      <i class="fa fa-flag-o"></i>
+                      <span class="label label-danger">9</span>
+                    </a>
+                    <ul class="dropdown-menu">
+                      <li class="header">You have 9 tasks</li>
+                      <li>
+                        <!-- Inner menu: contains the tasks -->
+                        <ul class="menu">
+                          <li><!-- Task item -->
+                            <a href="#">
+                              <!-- Task title and progress text -->
+                              <h3>
+                                Design some buttons
+                                <small class="pull-right">20%</small>
+                              </h3>
+                              <!-- The progress bar -->
+                              <div class="progress xs">
+                                <!-- Change the css width attribute to simulate progress -->
+                                <div class="progress-bar progress-bar-aqua" style="width: 20%" role="progressbar" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100">
+                                  <span class="sr-only">20% Complete</span>
+                                </div>
+                              </div>
+                            </a>
+                          </li>
+                          <!-- end task item -->
+                        </ul>
+                      </li>
+                      <li class="footer">
+                        <a href="#">View all tasks</a>
+                      </li>
+                    </ul>
+                  </li>
+                  <!-- User Account Menu -->
+                  
+                  {% if request.user.is_authenticated %}
+                  <ul class="nav navbar-nav">
+			        <li class="dropdown">
+			          <a href="#" class="dropdown-toggle" data-toggle="dropdown">{{request.user.first_name|title}} {{request.user.last_name|title}} <span class="caret"></span></a>
+			          <ul class="dropdown-menu" role="menu">
+			            <li><a href="#">Profile</a></li>
+			            <li class="divider"></li>
+			            <li><a href="{% url 'logout' %}">Logout</a></li>
+			          </ul>
+			        </li>
+			      </ul>
+			      {% else %}
+			      <li>
+			      	<a href="{% url 'login' %}">Login In</a>
+			      </li>
+			      {% endif %}
+                  <!-- Control Sidebar Toggle Button -->
+                  <li>
+                    <a href="#" data-toggle="control-sidebar"><i class="fa fa-gears"></i></a>
+                  </li>
+                </ul>
+              </div>
+            </nav>
+          </header>
+        <aside class="main-sidebar">
+            <section class="sidebar">
+                <ul class="sidebar-menu">
+                    <li class="header">OPERATION</li>
+                    <!-- Optionally, you can add icons to the links -->
+                    <li class="{% if 'collection/create' in request.path %}active{% endif %}"><a href="{% url 'collection_create' %}"><i class="fa fa-link"></i> <span>Step 1. Create an Task</span></a></li>
+                    <li class="{% if 'collection/upload' in request.path %}active{% endif %}"><a href="{% url 'collection_upload' %}"><i class="fa fa-link"></i> <span>Step 2. Upload A Patent List</span></a></li>
+                    <li class="{% if 'collection/display' in request.path %}active{% endif %}"><a href="#"><i class="fa fa-link"></i> <span>Step 3. Display and Select</span></a></li>
+                    <li class="treeview {% if 'collection/analyze' in request.path or 'collection/find_similar' in request.path or 'collection/extract_chemical' in request.path %}active{% endif %}">
+                      <a href="#"><i class="fa fa-link"></i> <span>Step 4. Analyze Patents</span>
+                        <span class="pull-right-container">
+                          <i class="fa fa-angle-left pull-right"></i>
+                        </span>
+                      </a>
+                      <ul class="treeview-menu">
+                        <li class="{% if 'collection/analyze' in request.path %}active{% endif %}"><a href="#">Classifiy Phrases</a></li>
+                        <li class="{% if 'collection/find_similar' in request.path %}active{% endif %}"><a href="{% url 'find_similar' %}">Find Similar Patents</a></li>
+                        <li class="{% if 'collection/extract_chemical' in request.path %}active{% endif %}"><a href="{% url 'extract_chemical' %}">Extract Chemicals</a></li>
+                      </ul>
+                    </li>
+                    <li><a href="#"><i class="fa fa-circle-o"></i> <span>Visualization</span></a></li>
+                    <li><a href="#"><i class="fa fa-circle-o"></i> <span>Report Center</span></a></li>
+                    <li><a href="#"><i class="fa fa-circle-o"></i> <span>Batch Mode</span></a></li>
+                    <li><a href="#"><i class="fa fa-circle-o"></i> <span>Export Data</span></a></li>
+                    <li><a href="{% url 'test' %}"><i class="fa fa-circle-o"></i> <span>Test</span></a></li>
+                </ul>
+            </section>
+        </aside>
+        <div class="content-wrapper">
+            <section class="content-header">
+              {% block content-header %}
+
+              {% endblock %}
+            </section>
+            <section class="content">
+                {% block content %}
+
+                {% endblock %}
+            </section>
+        </div>
+        <footer class="main-footer">
+            <!-- To the right -->
+            <div class="pull-right hidden-xs">
+              Michael
+            </div>
+            <!-- Default to the left -->
+            <strong>Copyright © 2017 <a href="#">Dow</a>.</strong> All rights reserved.
+        </footer>
+    </div>
+    <!-- jQuery 2.2.3 -->
+    <!--<script src="/static/js/jquery-2.2.3.min.js"></script>-->
+     <script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
+    <!-- Bootstrap 3.3.6 -->
+    <script src="/static/js/bootstrap.min.js"></script>
+    <!-- AdminLTE App -->
+    <script src="/static/js/app.js"></script>
+
+    <!-- DataTables -->
+    <script type="text/javascript" charset="utf8" src="http://cdn.datatables.net/1.10.15/js/jquery.dataTables.js"></script>
+
+    <script type="text/javascript" src="http://cdn.datatables.net/plug-ins/28e7751dbec/integration/bootstrap/3/dataTables.bootstrap.js"></script>
+
+    <script src="/static/js/dataTable.js"></script>
+
+    <!-- X-editable -->
+    <script src="/static/js/bootstrap-editable.js"></script>
+
+    <!-- Slider -->
+    <script src="/static/js/bootstrap-slider.min.js"></script>
+
+    <!-- Sortable -->
+    <script src="/static/js/Sortable.js"></script>
+
+    {% block js-block %}
+
+    {% endblock %}
+
+</body>
+</html>

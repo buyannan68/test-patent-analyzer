@@ -1,0 +1,270 @@
+{% extends "base.html" %}
+
+{% block content-header %}
+    <h1>
+    Find Similar Patents
+    <small>Optional description</small>
+  </h1>
+  <ol class="breadcrumb">
+    <li><a href="#"><i class="fa fa-dashboard"></i> Level</a></li>
+    <li class="active">Here</li>
+  </ol>
+{% endblock %}
+
+{% block content %}
+
+
+<style type="text/css">
+    #myNav{
+		width: 300px;    	
+    }
+    #myNav.affix{
+        top: 30px; /* Set the top position of pinned element */
+    }
+</style>
+
+    <div class="row">
+    	<div class="col-xs-3" id="myScrollspy">
+            <div id="myNav">
+                <div class="box box-primary">
+                    <div class="box-header with-border">
+                        <h3 class="box-title">Configuration Panel</h3>
+                    </div>
+                    <div class="box-body">
+                        <label style="color: #337ab7;font-size: 120%">Current settings</label>
+                        <dl class="dl-horizontal">
+                            <dt>Concept</dt>
+                            <dd><kbd id="slider_con_val"></kbd></dd>
+                        </dl>
+                        <dl class="dl-horizontal">
+                            <dt>Application</dt>
+                            <dd><kbd id="slider_app_val"></kbd></dd>
+                        </dl>
+                        <dl class="dl-horizontal">
+                            <dt>Product</dt>
+                            <dd><kbd id="slider_pro_val"></kbd></dd>
+                        </dl>
+                        <dl class="dl-horizontal">
+                            <dt>Tasks</dt>
+                            <dd><kbd id="task_val">All my tasks</kbd></dd>
+                        </dl>
+                        <dl class="dl-horizontal">
+                            <dt>Analyze field</dt>
+                            <dd><kbd id="field_val">Title - DWPI</kbd></dd>
+                        </dl>
+                     </div>
+                    <div class="box-footer">
+                        <label style="color: #337ab7;font-size: 120%">Change settings</label>
+                            <label for="">Weight for Concept (1-10)</label>
+                            <input id="slider_con" type="text" data-slider-min="0" data-slider-max="10" data-slider-step="1" data-slider-value="5"/>
+
+                            <label for="">Weight for Application (1-10)</label>
+                            <input id="slider_app" type="text" data-slider-min="0" data-slider-max="10" data-slider-step="1" data-slider-value="5"/>
+
+                            <label for="">Weight for Product (1-10)</label>
+                            <input id="slider_pro" type="text" data-slider-min="0" data-slider-max="10" data-slider-step="1" data-slider-value="5"/>
+
+                            <label style='display: block;height: 5px;'>&nbsp;</label>
+                            <label for="">Tasks</label>
+                            <select name="task" class="form-control">
+                                <option value="0">All My Tasks</option>
+                                <option value="-1">All Tasks</option>
+                            </select>
+                            <label style='display: block;height: 5px;'>&nbsp;</label>
+                            <label for="">Analyze field</label>
+                            <select name="analyze_field" class="form-control">
+                                <option value="Title - DWPI"> Title - DWPI </option>
+                                <option value="Abstract - DWPI"> Abstract - DWPI </option>
+                            </select>
+                            <br/>
+                            <button type="Submit" class="btn btn-primary pull-right" id="btn_set_para">Set Parameters</button>
+                    </div>
+
+                </div>
+            </div>
+    	</div>
+    	<div class="col-xs-9">
+            <div class="box box-primary">
+                <div class="box-header">
+                  <h3 class="box-title"><b>Sumbit the text you'd like to search</b></h3>
+                </div>
+                <div class="box-body">
+                    <div class="alert alert-danger alert-dismissible" role="alert" id="message_box" style="display:none">
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">×</span></button>
+                        <strong>Missing Data!</strong> Please input the text.
+                    </div>
+                    <textarea id="user_input" class="form-control" rows="5"></textarea>
+                    <br/>
+                    <button type="button" class="btn btn-primary pull-right" id="btn_find">Find</button>
+                </div>
+            </div>
+
+            <div class="box box-danger" id="term_box">
+                <div class="box-header">
+                  <h3 class="box-title"><b>Identified Terms: </b></h3>
+                  <button type="button" class="btn btn-sm btn-primary pull-right" id="btn_export_term">Export</button>
+                </div>
+                <div class="box-body">
+
+                    <div class="panel-group" id="term_list">
+                    </div>
+
+                </div>
+                <div class="overlay" id="term_list_loading">
+                  <i class="fa fa-refresh fa-spin"></i>
+                </div>
+            </div>
+
+            <div class="box box-primary" id="result_box">
+                <div class="box-header">
+                  <h3 class="box-title"><b>Simliar Patents: </b></h3>
+                  <button type="button" class="btn btn-sm btn-primary pull-right" id="btn_export_result">Export</button>
+                </div>
+                <div class="box-body">
+
+                    <div class="panel-group" id="result_list">
+                    </div>
+
+                </div>
+                <div class="overlay" id="result_list_loading">
+                  <i class="fa fa-refresh fa-spin"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block js-block %}
+<script>
+$(document).ready(function() {
+
+    $('#term_list_loading').hide();
+    $('#result_list_loading').hide();
+    $('#term_box').hide();
+    $('#result_box').hide();
+
+    {% for c in collection %}
+        $('select[name=task]').append('<option value={{ c.id }}>{{c.name}}</option>')
+    {% endfor%}
+
+    $('#slider_con').slider({
+        formatter: function(value) {
+            return 'Current value: ' + value;
+        }
+    });
+    $('#slider_app').slider({
+        formatter: function(value) {
+            return 'Current value: ' + value;
+        }
+    });
+    $('#slider_pro').slider({
+        formatter: function(value) {
+            return 'Current value: ' + value;
+        }
+    });
+
+    $('#slider_con_val').text($("#slider_con").slider('getValue'));
+    $('#slider_app_val').text($("#slider_app").slider('getValue'));
+    $('#slider_pro_val').text($("#slider_pro").slider('getValue'));
+
+    $('#btn_set_para').click(function(){
+        $('#slider_con_val').text($("#slider_con").slider('getValue'));
+        $('#slider_app_val').text($("#slider_app").slider('getValue'));
+        $('#slider_pro_val').text($("#slider_pro").slider('getValue'));
+        $('#task_val').text($('select[name=task]').find("option:selected").text());
+        $('#field_val').text($('select[name=analyze_field]').val());
+    });
+
+    $('#btn_find').click(function(){
+        if ($('#user_input').val().trim() == '') {
+            $("#message_box").fadeIn(1000)
+            $('#term_box').hide();
+            $('#result_box').hide();
+        }
+        else {
+            $('#term_list_loading').show()
+            $('#result_list_loading').show()
+            $('#term_list').empty();
+            $('#result_list').empty();
+
+            var post_data = {
+                "con_val": $("#slider_con").slider('getValue'),
+                "app_val": $("#slider_app").slider('getValue'),
+                "pro_val": $("#slider_pro").slider('getValue'),
+                "task": $('select[name=task]').val(),
+                "user_input": $('#user_input').val().trim(),
+                "analyze_field": $('select[name=analyze_field]').val(),
+                csrfmiddlewaretoken: '{{ csrf_token }}'
+            };
+
+            $.ajax({
+                url: {% url 'find_simliar_list' %},
+                type: "POST",
+                data: post_data,
+                success: function (data) {
+                    data = JSON.parse(data);
+                    if (data.result.length > 0) {
+                        // console.log("success");
+                        // console.log(data.result);
+                        $('#term_box').show();
+
+                        term_str = ''
+                        for (var i = 0; i < data.word_list.length; i++) {
+                            term_str = term_str + '<span class="label label-danger">' + data.word_list[i] + '</span> '
+                        }
+                        $('#term_list').append(term_str);
+
+                        $('#result_box').show();
+
+                        panel_beg = '<div class="panel panel-default">';
+                        panel_head_beg = '<div class="panel-heading">';
+                        panel_head_tool_beg = '<div class="box-tools pull-right">';
+                        panel_head_tool_btn_beg = '<button class="btn btn-box-tool" data-toggle="collapse" href="#collapse';
+                        panel_head_tool_btn_end = '">';
+                        panel_head_tool_end = '<i class="fa fa-plus"></i></button></div>';
+                        panel_head_end = '</div>';
+                        panel_collapse_beg1 = '<div id="collapse';
+                        panel_collapse_beg2 = '" class="panel-collapse collapse box-body">';
+                        panel_collapse_end = '</div>'
+                        panel_end = '</div>'
+
+                        record_id = 0;
+                        panel_str = '';
+
+                        pub_detail_info_demo = '<br/><b>Details:</b><br/> Such as key phrases, detail info, etc.'
+
+                        for (var i = 0; i < data.result.length; i++) {
+                            panel_str = panel_str + panel_beg + panel_head_beg + '<span class="badge">' + data.result[i].score + '</span>&nbsp;&nbsp;<b>' + data.result[i].pub_num + '</b> - ';
+                            if (data.result[i].title.length < 888) {
+                                panel_str = panel_str + data.result[i].title;
+                            } else {
+                                panel_str = panel_str + data.result[i].title.toLowerCase().substr(0, 888) + "...";
+                            }
+                            panel_str = panel_str + panel_head_tool_beg + panel_head_tool_btn_beg + record_id + panel_head_tool_btn_end + panel_head_tool_end + panel_head_end + panel_collapse_beg1 + record_id + panel_collapse_beg2 + data.result[i].text + pub_detail_info_demo + panel_collapse_end + panel_end
+                            record_id = record_id + 1
+                        }
+
+                        $('#result_list').append(panel_str);
+                    }
+                    else {
+                        $('#term_box').show();
+
+                        term_str = ''
+                        for (var i = 0; i < data.word_list.length; i++) {
+                            term_str = term_str + '<span class="label label-default">' + data.word_list[i] + '</span> '
+                        }
+                        $('#term_list').append(term_str);
+
+                        $('#result_box').show();
+
+                        $('#result_list').text("Sorry! There is no related publication in the database. Please refine the search criteria.");
+                    }
+                    $('#term_list_loading').hide()
+                    $('#result_list_loading').hide()
+                }
+            });
+        }
+    });
+});
+</script>
+{% endblock %}

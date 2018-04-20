@@ -1,0 +1,402 @@
+{% extends "base.html" %}
+
+{% block content-header %}
+    <h1>
+    Analyze
+    <small>Optional description</small>
+  </h1>
+  <ol class="breadcrumb">
+    <li><a href="#"><i class="fa fa-dashboard"></i> Level</a></li>
+    <li class="active">Here</li>
+  </ol>
+{% endblock %}
+
+{% block content %}
+
+
+<style type="text/css">
+    #myNav{
+		width: 300px;    	
+    }
+    #myNav.affix{
+        top: 30px; /* Set the top position of pinned element */
+    }
+</style>
+
+    <div class="row">
+    	<div class="col-xs-3" id="myScrollspy">
+            <div id="myNav">
+                <div class="box box-primary">
+                    <div class="box-header with-border">
+                        <h3 class="box-title">Configuration Panel</h3>
+                    </div>
+                    <div class="box-body">
+                        <label style="color: #337ab7;font-size: 120%">Current settings</label>
+                        <dl class="dl-horizontal">
+                            <dt>Analyzed Field</dt>
+                            <dd><kbd>{{ field_cur }}</kbd></dd>
+                        </dl>
+                        <dl class="dl-horizontal">
+                            <dt>Algorithm</dt>
+                            <dd><kbd># 1</kbd></dd>
+                        </dl>
+                     </div>
+                    <div class="box-footer">
+                        <label style="color: #337ab7;font-size: 120%">Change settings</label>
+                        <form action="" enctype="multipart/form-data" method="post" class="form-horizontal">
+                            {% csrf_token %}
+                            <label for="">Analyze field</label>
+                            <select name="analyze_field" class="form-control">
+                                <option value="Title - DWPI"> Title - DWPI </option>
+                                <option value="Abstract - DWPI"> Abstract - DWPI </option>
+                            </select>
+                            <label style='display: block;height: 5px;'>&nbsp;</label>
+                            <label for="">Algorithm</label>
+                            <select name="algorithm" class="form-control">
+                                <option>Native</option>
+                                <option>Alchemy</option>
+                            </select>
+                            <br/>
+                            <label>
+                                <input type="checkbox"> <a href="#" style="color:#000" data-toggle="tooltip" data-placement="right" title="Use historal classification data or not">Show History *</a>
+                            </label>
+                            <br/><br/>
+                            <button type="Submit" class="btn btn-primary pull-right" id="btn_go_analyze">Analyze Again</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+    	</div>
+    	<div class="col-xs-9">
+            <div class="box box-primary">
+                <div class="box-header">
+                  <h3 class="box-title"><b>Collection - {{ collection_name }}</b></h3>
+                </div>
+                <div class="box-body">
+
+                    <span style="display:none" id="record_id"></span>
+                    <div class="alert alert-danger alert-dismissible" role="alert" id="message_box" style="display:none">
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">×</span></button>
+                        <strong>Missing Classification!</strong> Please classify the line in blue.
+                    </div>
+
+                    <div class="panel-group" id="collection_list">
+                    </div>
+
+                    <div class="pull-left">Current Page: <span id="cur_page_id"></span> Total: <span id="total_page_number"></span></div>
+
+                    <button type="button" class="btn btn-primary pull-right" id="btn_next" style='display: none'>Save & Go Next Page</button>
+
+                    <button type="button" class="btn btn-primary pull-right" id="btn_save" style='display: none'>Save</button>
+
+                </div>
+                <div class="overlay" id="collection_list_loading">
+                  <i class="fa fa-refresh fa-spin"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block js-block %}
+<script>
+$.fn.editable.defaults.mode = 'inline';
+
+function construct_list(data) {
+    data = JSON.parse(data);
+    /*console.log(data);*/
+
+    /*Display page id*/
+    $("#cur_page_id").text(data.page_id);
+    $("#total_page_number").text(data.page_total);
+
+    panel_beg = '<div class="panel panel-default">';
+    panel_head_beg = '<div class="panel-heading">';
+    panel_head_tool_beg = '<div class="box-tools pull-right">';
+    panel_head_tool_label_def_beg = '<span class="label label-default">';
+    panel_head_tool_label_def_end = ' Phrases</span> '
+    panel_head_tool_label_suc = '<span class="label label-success">0 Concept</span> ';
+    panel_head_tool_label_war = '<span class="label label-warning">0 Application</span> ';
+    panel_head_tool_label_dag = '<span class="label label-danger">0 Product</span>';
+    panel_head_tool_btn_beg = '<button class="btn btn-box-tool" data-toggle="collapse" href="#collapse';
+    panel_head_tool_btn_end = '">';
+    panel_head_tool_end = '<i class="fa fa-plus"></i></button></div>';
+    panel_head_end = '</div>';
+    panel_collapse_beg1 = '<div id="collapse';
+    panel_collapse_beg2 = '" class="panel-collapse collapse"><ul class="list-group">';
+    panel_collapse_li_beg1 = '<li class="list-group-item">';
+    panel_collapse_li_a_beg = '<a href="#" class="phrase-editable" data-type="text">';
+    panel_collapse_li_a_end = '</a>';
+    panel_collapse_li_beg2 = '<div class="btn-group pull-right" data-toggle="buttons">';
+    panel_collapse_li_label_suc_beg1 = '<label class="btn btn-success btn-xs" id="';
+    panel_collapse_li_label_suc_beg2 = '" for="';
+    panel_collapse_li_label_suc_beg3 = '">';
+    panel_collapse_li_input_suc_beg = '<input type="checkbox" class="category_btn" autocomplete="off" name="';
+    panel_collapse_li_input_suc_end = '"> Concept</label>';
+    panel_collapse_li_label_war_beg1 = '<label class="btn btn-warning btn-xs" id="';
+    panel_collapse_li_label_war_beg2 = '" for="';
+    panel_collapse_li_label_war_beg3 = '">';
+    panel_collapse_li_input_war_beg = '<input type="checkbox" class="category_btn" autocomplete="off" name="';
+    panel_collapse_li_input_war_end = '"> Application</label>';
+    panel_collapse_li_label_dag_beg1 = '<label class="btn btn-danger btn-xs" id="';
+    panel_collapse_li_label_dag_beg2 = '" for="';
+    panel_collapse_li_label_dag_beg3 = '">';
+    panel_collapse_li_input_dag_beg = '<input type="checkbox" class="category_btn" autocomplete="off" name="';
+    panel_collapse_li_input_dag_end = '"> Product</label>';
+    panel_collapse_li_label_def_beg1 = '<label class="btn btn-default btn-xs" id="';
+    panel_collapse_li_label_def_beg2 = '" for="';
+    panel_collapse_li_label_def_beg3 = '">';
+    panel_collapse_li_input_def_beg = '<input type="checkbox" class="category_btn" autocomplete="off" name="';
+    panel_collapse_li_input_def_end = '"> Ignore</label>';
+    panel_collapse_li_end = '</div></li>';
+    panel_collapse_end = '</ul></div>';
+    panel_end = '</div>';
+
+    panel_str = ''
+    //clear old content
+    $('#collection_list').empty();
+    $("#message_box").hide();
+    $("#cur_page_id").text(data.page_id);
+    $("#total_page_number").text(data.page_total);
+
+    record_id = 0;
+
+    for(var i = 0; i < data.result.length; i++) {
+
+        // Update record_id
+        record_id = data.result[i].id;
+
+        // console.log(data.result[i].pub_num)
+        panel_str = panel_beg + panel_head_beg + '<b>' + data.result[i].pub_num + '</b> - ';
+        if (data.result[i].title.length < 888) {
+            panel_str = panel_str + data.result[i].title;
+        } else {
+            panel_str = panel_str + data.result[i].title.toLowerCase().substr(0, 888) + "...";
+        }
+        panel_str = panel_str + panel_head_tool_beg + panel_head_tool_label_def_beg + data.result[i].phrase_list.length + panel_head_tool_label_def_end + /*panel_head_tool_label_suc + panel_head_tool_label_war + panel_head_tool_label_dag + */panel_head_tool_btn_beg + data.result[i].id + panel_head_tool_btn_end + panel_head_tool_end + panel_head_end + panel_collapse_beg1 + data.result[i].id + panel_collapse_beg2;
+
+        panel_list_str = '';
+
+        for (var j = 0; j < data.result[i].phrase_list.length; j++) {
+            panel_list_str = panel_list_str + panel_collapse_li_beg1 + panel_collapse_li_a_beg + data.result[i].phrase_list[j] + panel_collapse_li_a_end + panel_collapse_li_beg2;
+            panel_list_str = panel_list_str + panel_collapse_li_label_suc_beg1 + data.result[i].pub_num + '-' + j + '-con' + panel_collapse_li_label_suc_beg2 + j + panel_collapse_li_label_suc_beg3 + panel_collapse_li_input_suc_beg + data.result[i].pub_num + '-' + j + '-con' + panel_collapse_li_input_suc_end;
+            panel_list_str = panel_list_str + panel_collapse_li_label_war_beg1 + data.result[i].pub_num + '-' + j + '-app' + panel_collapse_li_label_war_beg2 +  j + panel_collapse_li_label_war_beg3 + panel_collapse_li_input_war_beg + data.result[i].pub_num + '-' + j + '-app' + panel_collapse_li_input_war_end;
+            panel_list_str = panel_list_str + panel_collapse_li_label_dag_beg1 + data.result[i].pub_num + '-' + j + '-pro' + panel_collapse_li_label_dag_beg2 +  j + panel_collapse_li_label_dag_beg3 + panel_collapse_li_input_dag_beg + data.result[i].pub_num + '-' + j + '-pro' + panel_collapse_li_input_dag_end;
+            panel_list_str = panel_list_str + panel_collapse_li_label_def_beg1 + data.result[i].pub_num + '-' + j + '-ign' + panel_collapse_li_label_def_beg2 +  j + panel_collapse_li_label_def_beg3 + panel_collapse_li_input_def_beg + data.result[i].pub_num + '-' + j + '-ign' + panel_collapse_li_input_def_end;
+            panel_list_str = panel_list_str + panel_collapse_li_end;
+        }
+        panel_str = panel_str + panel_list_str + panel_collapse_end + panel_end;
+        // console.log(panel_str);
+        $('#collection_list').append(panel_str);
+
+        $('.phrase-editable').editable();
+
+    }
+
+    $('#record_id').text(record_id);
+
+    if (data.next_page == true) {
+        $('#btn_next').show();
+        $('#btn_save').hide();
+    } else {
+        $('#btn_next').hide();
+        $('#btn_save').show();
+    }
+
+    $("label.btn-xs").click(function(){
+        //get publication id
+        pub_id = this.id.substring(0, this.id.indexOf('-'))
+        cur_no = this.htmlFor
+
+        //take care of normal buttons
+        if (this.id.indexOf('-ign') == -1 ) {
+            var checkBox = $("input[name="+this.id);
+            //console.log(checkBox.prop("checked"))
+            if (!checkBox.prop("checked")) {
+                this.innerHTML = '<input type="checkbox" class="category_btn" autocomplete="off" name="' + this.id + '" checked>' + this.innerText + '(checked)'
+            }
+            else {
+                this.innerHTML = '<input type="checkbox" class="category_btn" autocomplete="off" name="' + this.id + '">' + this.innerText.replace('(checked)','')
+            }
+            checkBox.prop("checked", !checkBox.prop("checked"));
+            //console.log(checkBox.prop("checked"))
+
+            //check whether ignore button is active, if it is then rest
+            var ignLabel = $("label[id=" + pub_id + '-' + cur_no + "-ign");
+            var ignCheckBox = $("input[name=" + pub_id + '-' + cur_no + "-ign");
+            if (ignCheckBox.prop("checked")) {
+                ignLabel.removeClass('active')
+                ignLabel[0].innerHTML = '<input type="checkbox" class="category_btn" autocomplete="off" name="' + pub_id + '-' + cur_no + '-ign">Ignore'
+            }
+        }
+        //take care of ignore button
+        else {
+            var checkBox = $("input[name="+this.id);
+            //console.log(checkBox.prop("checked"))
+            if (!checkBox.prop("checked")) {
+                this.innerHTML = '<input type="checkbox" class="category_btn" autocomplete="off" name="' + this.id + '" checked>' + this.innerText + '(checked)'
+            }
+            else {
+                this.innerHTML = '<input type="checkbox" class="category_btn" autocomplete="off" name="' + this.id + '">' + this.innerText.replace('(checked)','')
+            }
+            checkBox.prop("checked", !checkBox.prop("checked"));
+            //console.log(checkBox.prop("checked"))
+
+            //check whether normal buttons are active, if they're then rest
+            var conLabel = $("label[id=" + pub_id + '-' + cur_no + "-con");
+            var conCheckBox = $("input[name=" + pub_id + '-' + cur_no + "-con");
+            if (conCheckBox.prop("checked")) {
+                conLabel.removeClass('active')
+                conLabel[0].innerHTML = '<input type="checkbox" class="category_btn" autocomplete="off" name="' + pub_id + '-' + cur_no + '-con">Concept'
+                //conCheckBox.prop("checked", !conCheckBox.prop("checked"));
+            }
+
+            var appLabel = $("label[id=" + pub_id + '-' + cur_no + "-app");
+            var appCheckBox = $("input[name=" + pub_id + '-' + cur_no + "-app");
+            if (appCheckBox.prop("checked")) {
+                appLabel.removeClass('active')
+                appLabel[0].innerHTML = '<input type="checkbox" class="category_btn" autocomplete="off" name="' + pub_id + '-' + cur_no + '-app">Application'
+                //appCheckBox.prop("checked", !appCheckBox.prop("checked"));
+            }
+
+            var proLabel = $("label[id=" + pub_id + '-' + cur_no + "-pro");
+            var proCheckBox = $("input[name=" + pub_id + '-' + cur_no + "-pro");
+            if (proCheckBox.prop("checked")) {
+                proLabel.removeClass('active')
+                proLabel[0].innerHTML = '<input type="checkbox" class="category_btn" autocomplete="off" name="' + pub_id + '-' + cur_no + '-pro">Product'
+                //proCheckBox.prop("checked", !proCheckBox.prop("checked"));
+            }
+
+        }
+
+    });
+
+    $('#collection_list_loading').hide();
+}
+
+function check_list_checked() {
+    flag = false
+    for(var i=0; i<$("li.list-group-item").length;i++) {
+        if ($("li.list-group-item")[i].innerHTML.indexOf("checked") < 0) {
+            $("li.list-group-item")[i].className = $("li.list-group-item")[i].className + " active";
+            flag = true; 
+            var div_collapse = $(document.getElementById($('li.list-group-item')[i].closest('div').id))
+            if (!div_collapse.hasClass('in')) {
+                div_collapse.removeAttr('style');
+                div_collapse.attr('aria-expanded', 'true');
+                div_collapse.addClass('in');
+            }
+        } else {
+            $("li.list-group-item")[i].className = "list-group-item";
+        }
+    }
+    if (flag == true) {
+        $("body").scrollTop(0); 
+        $("#message_box").fadeIn(1000);
+        return true;
+    }
+    var arr_Phrase = new Array();
+    //Get the info from each line
+    for(var i=0; i<$("input[type=checkbox]").length;i++) {
+        
+        if ($("input[type=checkbox]")[i].checked) {
+            check_info = $("input[type=checkbox]")[i].name.split('-');
+            phrase_txt = $("input[type=checkbox]")[i].closest("li").innerText;
+            phrase_txt = phrase_txt.substr(0, phrase_txt.indexOf("Concept"));
+            phrase_pub_id = $("input[type=checkbox]")[i].closest("ul").closest("div").id.substr(8,)
+
+            var phrase = new Object();
+            phrase.pub_id = phrase_pub_id;
+            phrase.text = phrase_txt;
+            phrase.pub_num = check_info[0];
+            phrase.type = check_info[2];
+            // console.log("Phrase: " + phrase_txt + ", Publication: " + check_info[0] + ", Type: " + check_info[2])
+            arr_Phrase[arr_Phrase.length] = phrase;
+        }
+    }
+    console.log(arr_Phrase);
+    return arr_Phrase;
+}
+
+$(document).ready(function(){
+
+    $('[data-toggle="tooltip"]').tooltip();
+
+    $("#myNav").affix({
+        offset: { 
+            top: 125 
+     	}
+    });
+
+    var post_data = {
+        "file": {{ file_id }},
+        "field": "{{ field_cur }}",
+        csrfmiddlewaretoken: '{{ csrf_token }}'
+    };
+
+    $('#collection_list_loading').show();
+
+    $.ajax({
+        url: {% url 'collection_analyze_view_update' %},
+        type: 'POST',
+        data: post_data,
+        success: function (data) {
+            construct_list(data);
+        }
+    });
+    
+   $("#btn_save").click(function(){
+        //Check whether each line has already selected, if not prompt user to select
+        arr_Phrase = check_list_checked();
+        if (arr_Phrase == true) {
+            return true;
+        }
+
+        var post_data = {
+            "file": {{ file_id }},
+            "field": "{{ field_cur }}",
+            "phrase": JSON.stringify(arr_Phrase),
+            "page_id": $("#cur_page_id").text(),
+            csrfmiddlewaretoken: '{{ csrf_token }}'
+        };
+
+        // $.ajax({
+        //     url: {% url 'collection_analyze_view_update' %},
+        //     type: 'POST',
+        //     data: post_data,
+        //     success: function (data) {
+        //     }
+        // });
+   });
+
+   $("#btn_next").click(function(){
+        //Check whether each line has already selected, if not prompt user to select
+        arr_Phrase = check_list_checked();
+        if (arr_Phrase == true) {
+            return true;
+        }
+
+        var post_data = {
+            "file": {{ file_id }},
+            "field": "{{ field_cur }}",
+            "phrase": JSON.stringify(arr_Phrase),
+            "page_id": $("#cur_page_id").text(),
+            "record_id": $('#record_id').text(),
+            csrfmiddlewaretoken: '{{ csrf_token }}'
+        };
+
+        $('#collection_list_loading').show();
+
+        $.ajax({
+            url: {% url 'collection_analyze_view_update' %},
+            type: 'POST',
+            data: post_data,
+            success: function (data) {
+                construct_list(data);
+            }
+        });
+   });
+
+});
+</script>
+{% endblock %}
